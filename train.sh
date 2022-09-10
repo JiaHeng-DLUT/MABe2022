@@ -4,4 +4,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
     --nproc_per_node=8 \
     --master_port=4321 \
     mabe/train.py \
-    -opt options/video/seed_0.yml
+    -opt options/keypoint/seed_0.yml

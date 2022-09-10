@@ -1,0 +1,204 @@
+# general settings
+# name: debug
+name: seed_1
+model_type: GPTModel
+manual_seed: 1
+cudnn_deterministic: true
+
+# common settings
+common:
+  total_frames: &total_frames 1800
+  num_frames: &num_frames 50
+  num_objects: &num_objects 3
+  output_dim: &output_dim 128
+
+  decode_object: &decode_object true
+  decode_frame: &decode_frame true
+  flip: &flip true
+
+  mean:
+    &mean [
+      123.87961151588748,
+      223.5918712811172,
+      124.43523568103623,
+      223.36677524792552,
+      124.66848178506375,
+      223.76173365715442,
+      124.22560564663024,
+      223.56321878162316,
+      123.39651356000809,
+      223.39216201173852,
+      123.49873750252985,
+      223.93695962355798,
+      124.23837067395264,
+      223.50159279498078,
+      124.43562305201377,
+      223.05769692369967,
+      124.5310498886865,
+      223.90217041084802,
+      125.5857827362882,
+      223.44317091681845,
+      129.46229234972677,
+      222.96338605545435,
+      132.16945051608985,
+      222.9850664845173,
+    ]
+  std:
+    &std [
+      127.60541927601614,
+      153.1660171688136,
+      125.92373714076464,
+      153.6580325573659,
+      126.05466659107975,
+      153.90967757073375,
+      125.81666187918479,
+      153.58388984989531,
+      126.4059177112519,
+      153.30124097682864,
+      126.5627577404642,
+      153.4335953722684,
+      124.60203245324489,
+      153.6962674807594,
+      124.03307733903947,
+      152.92518036681582,
+      124.29544665622919,
+      153.15304611219943,
+      122.82014000271147,
+      152.49645669945366,
+      118.90278692995403,
+      148.17677987976938,
+      115.24260960147532,
+      144.50475252067284,
+    ]
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: submission_keypoints.npy
+    type: MouseKeypointDataset
+    data_path_list: [../dataset/mouse/submission_keypoints.npy]
+    meta_path_list: [mabe/data/meta_info/mouse_meta_info_train_0.txt]
+    frame_number_map_path: ../dataset/mouse/frame_number_map.npy
+    num_frames: *num_frames
+    total_frames: *total_frames
+    mean: *mean
+    std: *std
+    use_label: false
+
+    hflip_prob: ~
+    vflip_prob: 0.5
+    htrans_prob: ~
+    vtrans_prob: ~
+    max_trans: ~
+    rot_prob: ~
+
+    # data loader
+    batch_size_per_gpu: 32
+    num_worker_per_gpu: 4
+    pin_memory: true
+
+  val:
+    name: user_train.npy
+    type: MouseKeypointDataset
+    data_path_list: [../dataset/mouse/user_train.npy]
+    meta_path_list: [mabe/data/meta_info/mouse_meta_info_val_0.txt]
+    frame_number_map_path: ../dataset/mouse/frame_number_map_training.npy
+    num_frames: *num_frames
+    total_frames: *total_frames
+    mean: *mean
+    std: *std
+    use_label: true
+
+    hflip_prob: ~
+    vflip_prob: ~
+    htrans_prob: ~
+    vtrans_prob: ~
+    max_trans: ~
+    rot_prob: ~
+
+    # data loader
+    batch_size_per_gpu: 128
+    num_worker_per_gpu: 4
+    pin_memory: true
+
+  test:
+    name: submission_keypoints.npy
+    type: MouseKeypointDataset
+    data_path_list: [../dataset/mouse/submission_keypoints.npy]
+    meta_path_list: [mabe/data/meta_info/mouse_meta_info_train_0.txt]
+    frame_number_map_path: ../dataset/mouse/frame_number_map.npy
+    num_frames: *num_frames
+    total_frames: *total_frames
+    mean: *mean
+    std: *std
+    use_label: false
+
+    hflip_prob: ~
+    vflip_prob: ~
+    htrans_prob: ~
+    vtrans_prob: ~
+    max_trans: ~
+    rot_prob: ~
+
+    # data loader
+    batch_size_per_gpu: 128
+    num_worker_per_gpu: 4
+    pin_memory: true
+
+# network structures
+network:
+  type: Transformer
+  # Transformer
+  input_dim: 24
+  hidden_dim: 768
+  num_layers: 24
+  num_heads: 12
+  output_dim: *output_dim
+  # dropout
+  attn_drop_prob: 0
+  res_drop_prob: 0
+  # attention mask
+  num_frames: *num_frames
+  num_objects: *num_objects
+  # pos emb
+  total_frames: *total_frames
+  # predictor
+  decode_object: *decode_object
+  decode_frame: *decode_frame
+  flip: *flip
+
+# path
+path:
+  pretrain_network: ~
+  strict_load: true
+
+# training settings
+train:
+  optim:
+    type: AdamW
+    lr: !!float 1e-5
+    weight_decay: 0.1
+    betas: [0.9, 0.95]
+
+  grad_norm_clip: 0.1
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [50000]
+    restart_weights: [1]
+    eta_min: !!float 1e-7
+
+  total_iter: 10000
+  warmup_iter: 500 # -1: no warm up
+
+  decode_object: *decode_object
+  decode_frame: *decode_frame
+  flip: *flip
+
+# logging settings
+logger:
+  print_freq: 10
+  save_checkpoint_freq: 1300
+  use_wandb: false
+
+find_unused_parameters: false
