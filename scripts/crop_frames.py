@@ -23,7 +23,7 @@ paths = glob.glob(f"{root}/userTrain_videos/*.avi") + glob.glob(
     f"{root}/submission_videos/*.avi"
 )
 print(len(paths))
-frame_dir = f"{root}/frames"
+frame_dir = f"/cache/frames"
 os.makedirs(frame_dir, exist_ok=True)
 
 # crop
