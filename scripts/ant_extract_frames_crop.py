@@ -7,7 +7,7 @@ import numpy as np
 from tqdm import tqdm
 
 # keypoints
-root = "../dataset/mouse"
+root = "../dataset/ants"
 keypoint_paths = [
     os.path.join(root, "user_train.npy"),
     os.path.join(root, "submission_keypoints.npy"),
@@ -27,9 +27,9 @@ frame_dir = f"/cache/frames"
 os.makedirs(frame_dir, exist_ok=True)
 
 # crop
-num_frame = 1800
+num_frame = 900
 crop_size = 512
-padbbox = 50
+padbbox = 115
 
 
 def extract_frames(path):
@@ -46,24 +46,25 @@ def extract_frames(path):
         success, frame = cap.read()
         if success:
             # cv2.imwrite(f"{frame_dir}/{name}/{frame_idx}_full.jpg", frame)
-            # keypoint
-            allcoords = np.int32(kp[frame_idx].reshape(-1, 2))
-            allcoords = allcoords[allcoords.sum(1) > 0]
-            if allcoords.shape[0] == 0:
-                allcoords = np.int32([[0, crop_size]])
-            minvals = (
-                max(np.min(allcoords[:, 0]) - padbbox, 0),
-                max(np.min(allcoords[:, 1]) - padbbox, 0),
-            )
-            maxvals = (
-                min(np.max(allcoords[:, 0]) + padbbox, crop_size),
-                min(np.max(allcoords[:, 1]) + padbbox, crop_size),
-            )
-            bbox = (*minvals, *maxvals)
-            bbox = np.array(bbox)
-            bbox = np.int32(bbox)
-            # crop
-            frame = frame[bbox[0] : bbox[2], bbox[1] : bbox[3]]
+            if kp.shape[0] == 900:
+                # keypoint
+                allcoords = np.int32(kp[frame_idx].reshape(-1, 2) * crop_size)
+                allcoords = allcoords[allcoords.sum(1) > 0]
+                if allcoords.shape[0] == 0:
+                    allcoords = np.int32([[0, crop_size]])
+                minvals = (
+                    max(np.min(allcoords[:, 0]) - padbbox, 0),
+                    max(np.min(allcoords[:, 1]) - padbbox, 0),
+                )
+                maxvals = (
+                    min(np.max(allcoords[:, 0]) + padbbox, crop_size),
+                    min(np.max(allcoords[:, 1]) + padbbox, crop_size),
+                )
+                bbox = (*minvals, *maxvals)
+                bbox = np.array(bbox)
+                bbox = np.int32(bbox)
+                # crop
+                frame = frame[bbox[0] : bbox[2], bbox[1] : bbox[3]]
             # resize
             frame = cv2.resize(frame, (224, 224), cv2.INTER_CUBIC)
             # save
@@ -78,7 +79,7 @@ def extract_frames(path):
 #     extract_frames(path)
 pbar = tqdm(total=len(paths))
 update = lambda *args: pbar.update()
-pool = multiprocessing.Pool(32)
+pool = multiprocessing.Pool(64)
 for path in paths:
     pool.apply_async(extract_frames, (path,), callback=update)
 print("Start")
